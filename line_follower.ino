@@ -26,9 +26,9 @@ const uint8_t IRSensorRight = 3;
 // ============================================================
 // Motor speed constants (0-255)
 const uint8_t MAX_SPEED = 255;
-const uint8_t BASE_SPEED = 200; // Normal forward speed
-const uint8_t CORRECTION_SPEED = 150; // Speed during line corrections
-const uint8_t MIN_SPEED = 100; // Minimum speed to overcome friction
+const uint8_t BASE_SPEED = 100;        // LOW SPEED forward 
+const uint8_t CORRECTION_SPEED = 60;   // LOW SPEED corrections
+const uint8_t MIN_SPEED = 50;          // Minimum speed to overcome friction
 // Sensor thresholds
 const uint16_t SENSOR_THRESHOLD = 500; // Adjust based on your IR sensor calibration
  // Below threshold = on black line (0-1023 ADC)
@@ -147,14 +147,15 @@ void moveForward(uint8_t speed) {
  setMotorRight(1, speed);
 }
 void moveLeft(uint8_t speed) {
- // Reduce left motor speed to turn left
- setMotorLeft(1, speed - 50); // Left motor slower
- setMotorRight(1, speed); // Right motor normal
+ // Line curves left - slow down LEFT motor significantly to turn sharply
+ setMotorLeft(1, speed - 30);  // Left motor much slower
+ setMotorRight(1, speed);       // Right motor at full speed
 }
+
 void moveRight(uint8_t speed) {
- // Reduce right motor speed to turn right
- setMotorLeft(1, speed); // Left motor normal
- setMotorRight(1, speed - 50); // Right motor slower
+ // Line curves right - slow down RIGHT motor significantly to turn sharply
+ setMotorLeft(1, speed);        // Left motor at full speed
+ setMotorRight(1, speed - 30);  // Right motor much slower
 }
 void stopMotors() {
  setMotorLeft(0, 0);
