@@ -78,46 +78,44 @@ void loop() {
  updateLineFollowingState();
  executeMotorCommands();
  
- // Uncomment for debugging
- // debugOutput();
+ // Debug output every 500ms
+ debugOutput();
  }
 }
 // ============================================================
 // SENSOR READING
 // ============================================================
 void readSensors() {
- // Read analog values from IR sensors
- // Digital pins 2 & 3 are mapped from analog if using A0, A1
- // If using digital sensors, they'll return HIGH (white) or LOW (black)
+ // Read digital values from IR sensors
+ // IR sensors output HIGH when on BLACK line, LOW when on WHITE surface
+ // We invert this for clarity: 0 = on line (black), 1 = off line (white)
  
- sensorLeftValue = digitalRead(IRSensorLeft);
- sensorRightValue = digitalRead(IRSensorRight);
- 
- // Invert logic: LOW (0) = black line detected, HIGH (1) = white surface
- // This makes the logic more intuitive: 0 = on line, 1 = off line
+ sensorLeftValue = !digitalRead(IRSensorLeft);   // Invert: HIGH becomes 0, LOW becomes 1
+ sensorRightValue = !digitalRead(IRSensorRight); // Invert: HIGH becomes 0, LOW becomes 1
 }
 // ============================================================
 // LINE FOLLOWING STATE MACHINE
 // ============================================================
 void updateLineFollowingState() {
- boolean leftOnLine = (sensorLeftValue == LOW); // Black detected
- boolean rightOnLine = (sensorRightValue == LOW); // Black detected
+ // After inversion: 0 = on line (black), 1 = off line (white)
+ boolean leftOnLine = (sensorLeftValue == 0);   // 0 = black detected
+ boolean rightOnLine = (sensorRightValue == 0); // 0 = black detected
+
  if (leftOnLine && rightOnLine) {
  // Both sensors on line - go straight
  currentState = STATE_ON_LINE;
  }
  else if (leftOnLine && !rightOnLine) {
- // Left on line, right off - line curves left
+ // Left on line, right off - line curves left, turn left
  currentState = STATE_LEFT_CORRECTION;
  }
  else if (!leftOnLine && rightOnLine) {
- // Right on line, left off - line curves right
+ // Right on line, left off - line curves right, turn right
  currentState = STATE_RIGHT_CORRECTION;
  }
  else {
  // Both sensors off line - lost the line
- // Attempt recovery by turning harder in last known direction
- // (currentState remains unchanged for hysteresis)
+ // Keep turning in last known direction (hysteresis)
  }
 }
 // ============================================================
