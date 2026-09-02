@@ -26,9 +26,9 @@ const uint8_t IRSensorRight = 3;
 // ============================================================
 // Motor speed constants (0-255)
 const uint8_t MAX_SPEED = 255;
-const uint8_t BASE_SPEED = 150;        // Forward speed
-const uint8_t CORRECTION_SPEED = 120;  // Turn speed  
-const uint8_t MIN_SPEED = 100;         // IMPORTANT: Minimum speed to overcome friction
+const uint8_t BASE_SPEED = 100; // LOW SPEED forward
+const uint8_t CORRECTION_SPEED = 60; // LOW SPEED corrections
+const uint8_t MIN_SPEED = 50; // Minimum speed to overcome friction
 // Sensor thresholds
 const uint16_t SENSOR_THRESHOLD = 500; // Adjust based on your IR sensor calibration
  // Below threshold = on black line (0-1023 ADC)
@@ -86,18 +86,19 @@ void loop() {
 // SENSOR READING
 // ============================================================
 void readSensors() {
- // Read digital values from IR sensors (with inversion)
- sensorLeftValue = !digitalRead(IRSensorLeft);
- sensorRightValue = !digitalRead(IRSensorRight);
+ // Read digital values from IR sensors
+ // IR sensors output HIGH when on BLACK line, LOW when on WHITE surface
+ // We invert this for clarity: 0 = on line (black), 1 = off line (white)
+ sensorLeftValue = !digitalRead(IRSensorLeft); // Invert: HIGH becomes 0, LOW becomes 1
+ sensorRightValue = !digitalRead(IRSensorRight); // Invert: HIGH becomes 0, LOW becomes 1
 }
 // ============================================================
 // LINE FOLLOWING STATE MACHINE
 // ============================================================
 void updateLineFollowingState() {
  // After inversion: 0 = on line (black), 1 = off line (white)
- boolean leftOnLine = (sensorLeftValue == 0);   // 0 = black detected
+ boolean leftOnLine = (sensorLeftValue == 0); // 0 = black detected
  boolean rightOnLine = (sensorRightValue == 0); // 0 = black detected
-
  if (leftOnLine && rightOnLine) {
  // Both sensors on line - go straight
  currentState = STATE_ON_LINE;
@@ -144,17 +145,14 @@ void moveForward(uint8_t speed) {
  setMotorRight(1, speed);
 }
 void moveLeft(uint8_t speed) {
- // Line curves left - reduce LEFT motor but keep it moving
- uint8_t leftSpeed = (speed >= 50) ? (speed - 50) : MIN_SPEED;  // Never go below MIN_SPEED
- setMotorLeft(1, leftSpeed);
- setMotorRight(1, speed);
+ // Line curves left - slow down LEFT motor significantly to turn sharply
+ setMotorLeft(1, speed - 30); // Left motor much slower
+ setMotorRight(1, speed); // Right motor at full speed
 }
-
 void moveRight(uint8_t speed) {
- // Line curves right - reduce RIGHT motor but keep it moving
- uint8_t rightSpeed = (speed >= 50) ? (speed - 50) : MIN_SPEED;  // Never go below MIN_SPEED
- setMotorLeft(1, speed);
- setMotorRight(1, rightSpeed);
+ // Line curves right - slow down RIGHT motor significantly to turn sharply
+ setMotorLeft(1, speed); // Left motor at full speed
+ setMotorRight(1, speed - 30); // Right motor much slower
 }
 void stopMotors() {
  setMotorLeft(0, 0);
