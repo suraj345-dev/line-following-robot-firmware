@@ -26,9 +26,9 @@ const uint8_t IRSensorRight = 3;
 // ============================================================
 // Motor speed constants (0-255)
 const uint8_t MAX_SPEED = 255;
-const uint8_t BASE_SPEED = 130;        // Good forward speed
-const uint8_t CORRECTION_SPEED = 110;  // Smooth turn speed
-const uint8_t MIN_SPEED = 80;          // Minimum speed to overcome friction
+const uint8_t BASE_SPEED = 110;        // Forward speed
+const uint8_t CORRECTION_SPEED = 90;   // Turn speed  
+const uint8_t MIN_SPEED = 60;          // Minimum speed
 // Sensor thresholds
 const uint16_t SENSOR_THRESHOLD = 500; // Adjust based on your IR sensor calibration
  // Below threshold = on black line (0-1023 ADC)
@@ -42,9 +42,6 @@ const uint8_t STATE_RIGHT_CORRECTION = 2;
 uint8_t currentState = STATE_ON_LINE;
 uint16_t sensorLeftValue = 0;
 uint16_t sensorRightValue = 0;
-uint8_t leftDebounce = 0;
-uint8_t rightDebounce = 0;
-const uint8_t DEBOUNCE_THRESHOLD = 2;  // Require 2 readings before changing
 unsigned long lastSensorReadTime = 0;
 const unsigned long SENSOR_READ_INTERVAL = 20; // Read sensors every 20ms
 // ============================================================
@@ -89,32 +86,9 @@ void loop() {
 // SENSOR READING
 // ============================================================
 void readSensors() {
- // Read digital values from IR sensors
- // IR sensors output HIGH when on BLACK line, LOW when on WHITE surface
- 
- uint8_t rawLeft = !digitalRead(IRSensorLeft);
- uint8_t rawRight = !digitalRead(IRSensorRight);
- 
- // Debounce: require stable reading for DEBOUNCE_THRESHOLD reads
- if (rawLeft == sensorLeftValue) {
- leftDebounce = 0;  // Reset if same
- } else {
- leftDebounce++;
- if (leftDebounce >= DEBOUNCE_THRESHOLD) {
- sensorLeftValue = rawLeft;  // Accept new value
- leftDebounce = 0;
- }
- }
- 
- if (rawRight == sensorRightValue) {
- rightDebounce = 0;  // Reset if same
- } else {
- rightDebounce++;
- if (rightDebounce >= DEBOUNCE_THRESHOLD) {
- sensorRightValue = rawRight;  // Accept new value
- rightDebounce = 0;
- }
- }
+ // Read digital values from IR sensors (with inversion)
+ sensorLeftValue = !digitalRead(IRSensorLeft);
+ sensorRightValue = !digitalRead(IRSensorRight);
 }
 // ============================================================
 // LINE FOLLOWING STATE MACHINE
@@ -170,15 +144,15 @@ void moveForward(uint8_t speed) {
  setMotorRight(1, speed);
 }
 void moveLeft(uint8_t speed) {
- // Line curves left - reduce LEFT motor speed moderately for smooth turn
- setMotorLeft(1, speed - 20);  // Left motor slightly slower
- setMotorRight(1, speed);       // Right motor at full correction speed
+ // Line curves left
+ setMotorLeft(1, speed - 25);
+ setMotorRight(1, speed);
 }
 
 void moveRight(uint8_t speed) {
- // Line curves right - reduce RIGHT motor speed moderately for smooth turn
- setMotorLeft(1, speed);        // Left motor at full correction speed
- setMotorRight(1, speed - 20);  // Right motor slightly slower
+ // Line curves right
+ setMotorLeft(1, speed);
+ setMotorRight(1, speed - 25);
 }
 void stopMotors() {
  setMotorLeft(0, 0);
